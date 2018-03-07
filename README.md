@@ -1,2 +1,3 @@
 # Women_In_high_profile_journal
-Shen et al. 2018
+
+Online supplementary materials for bioRxiv publication https://www.biorxiv.org/content/early/2018/03/02/275362
