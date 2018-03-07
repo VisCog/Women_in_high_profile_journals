@@ -1,144 +1,110 @@
-#################
-#Make Figure 1
-#Shen et al. 2018
-#BioRxiv
-#################
+####################
+# Make Figure 1
+# Shen et al. (2018)
+# BioRxiv
+####################
 
+# Clear workspace
+rm(list = ls()) 
+
+# Load packages
 library(dplyr)
 library(ggplot2)
 library(readr)
 library(ggrepel)
 
-#Set your folder name here 
-setwd("H:/PubMed1517")
+# Set your folder name here 
+setwd("~/Desktop/women/data")
 
-#read in names of data files in folder
-filenames<-list.files(pattern="*.csv")
+# Read in names of data files in folder
+filenames <- list.files(pattern = "*.csv")
 
-############Calculating female author/(female author + male author) for all journals############
+# Reformat journal names
+journal <- filenames %>% gsub(".csv", "", .) %>% gsub("_", " ", .) %>% toupper()
 
-#initialize
-female_1st<-NULL
-female_last<-NULL
-percent_female<-NULL
-total_n<-NULL
+############ Calculating female author/(female author + male author) for all journals ############
 
+filter_file <- function(filename) {
+  file <- read.csv(filename, stringsAsFactors = FALSE)
+  
+  # filter to articles with abstract
+  file <- file %>% filter(Abstract == 1)
 
-#loop through all files
-for (k in 1:length(filenames)) {
-  
-  file <- read_csv(filenames[k])
-  
-  #filter to articles with abstract 
-  file <-file %>% filter(Abstract == 1)
-  
+  # Create tables for first and last female author counts
+  table_first <- table(file$Gender_1st)
+  table_last <- table(file$Gender_last)
 
-  for (i in 1:length(file$Journal)) {
-    if (is.na(file$Gender_1st[i])) {
-      file$Gender_1st[i]<-"Unknown"    
-    }
+  # Calculate total number of entries
+  total_n <- table_first["male"] + table_first["female"]
   
-    if (is.na(file$Gender_last[i])) {
-      file$Gender_last[i]<-"Unknown"    
-    }
-    
-    #check if last author was missing in the original entry (single author paper)
-    if (is.na(file$FName_last_Truncate[i])) {
-      file$Gender_last[i]<-"SingleAuthor"    
-    }
-  }
+  # Calculate percentage female 
+  female_first <- round(table_first["female"] / total_n * 100, 2)
+  female_last <- round(table_last["female"] / (table_last["male"] + table_first["female"]) * 100, 2)
   
-  file$Year<-as.numeric(as.character((file$Year)))
-  
-  #name levesl
-  file$Gender_last<-factor(file$Gender_last,levels=c("Unknown","SingleAuthor","male","female"))
-  file$Gender_1st<-factor(file$Gender_1st,levels=c("Unknown","male","female"))
-  
-  #calculate percentage female 
-  female_1st<-round(table(file$Gender_1st)[3]/(table(file$Gender_1st)[2]+table(file$Gender_1st)[3])*100,digits=2)
-  female_last<-round(table(file$Gender_last)[4]/(table(file$Gender_last)[3]+table(file$Gender_last)[4])*100,digits=2)
-  
-  #calculate total number of entry
-  total_n<-table(file$Gender_1st)[2]+table(file$Gender_1st)[3]
-  
-  percent_female<-rbind(percent_female,cbind(female_1st,female_last,total_n,gsub(".csv","",filenames[k])))
-  
+  return(c(female_first, female_last, total_n))
 }
 
-#Change variable type for plotting
-colnames(percent_female)[4]<-"Journal"
-percent_female<-as.data.frame(percent_female)
-percent_female$Journal<-as.character(percent_female$Journal)
+# Create data frame with percent female information
+percent_female = data.frame(unname(t(sapply(filenames, filter_file))))
+colnames(percent_female) <- c("female_first", "female_last", "total_n")
+percent_female$journal <- journal
 
-#Change file names to journal names, to merge with keys in journal impact factor
-percent_female <- 
-  percent_female %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Annual_Review_Neuro", "ANNUAL REVIEW OF NEUROSCIENCE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Behavioral_and_brain_sciences", "BEHAVIORAL AND BRAIN SCIENCES")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Brain", "BRAIN")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Cerebral_cortex", "CEREBRAL CORTEX")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Current_op_neuro", "CURRENT OPINION IN NEUROBIOLOGY")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_J_of_Neuro", "JOURNAL OF NEUROSCIENCE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Nature", "NATURE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Nature_Neuro", "NATURE NEUROSCIENCE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Nature_Review_of_Neuroscience", "NATURE REVIEWS NEUROSCIENCE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_NeuroImage", "NEUROIMAGE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Neuron", "NEURON")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_PNAS", "PNAS")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Science", "SCIENCE")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Trends_in_neurosciences", "TRENDS IN NEUROSCIENCES")) %>%
-  mutate(Journal = replace(Journal, Journal=="Total_Processed_Neuropsychology_review", "NEUROPSYCHOLOGY REVIEW")) %>%
-  as.data.frame()
+############ Merging with Journal Impact Factor ############
 
+# Set your folder name here 
+setwd("~/Desktop/women/")
+impact_factor <- read.csv("ThomasReutersImpactFactor.csv", stringsAsFactors = FALSE)
 
-############Merging with Journal Impact Factor############
+# Merge with percentage female, to make scatter dataset
+scatter <- merge(impact_factor, percent_female, by = "journal", all = TRUE)
 
-ImpactFactor <- read_csv("ThomasReutersImpactFactor.csv")
+# Change journal title to sentence case
+scatter$journal <- gsub("(\\w)(\\w*)", "\\U\\1\\L\\2", scatter$journal, perl = TRUE)
 
-#merge with percentage female, make scatter dataset
-scatter<-merge(ImpactFactor,percent_female,by=c("Journal"),all=TRUE)
+# ############ Scatterplot for First Authors ############
 
-#change numbers to numeric
-scatter$female_1st <-as.numeric(as.character(scatter$female_1st))
-scatter$female_last<-as.numeric(as.character(scatter$female_last))
-scatter$total_n    <-as.numeric(as.character(scatter$total_n))
+first <- ggplot(data = scatter, 
+                aes(x = impact_5, 
+                    y = female_first, 
+                    color = journal, 
+                    label = journal, 
+                    size = total_n * 10)) + 
+  theme_bw() + 
+  geom_point(alpha = 0.5) + 
+  scale_size(range = c(5, 50)) + 
+  geom_text_repel(aes(label = journal), size = 6) + 
+  theme(axis.text=element_text(size = 14), 
+        axis.title=element_text(size = 14), 
+        legend.position = "none") + 
+  labs(x = "Impact Factor of Journal", 
+       y = "Percentage Female First Author") + 
+  ylim(10, 55) + 
+  xlim(5, 47) 
 
-#Change journal title to sentence case
-simpleCap <- function(x) {
-  s <- strsplit(x, " ")[[1]]
-  paste(toupper(substring(s, 1,1)), tolower(substring(s, 2)),
-        sep="", collapse=" ")
-}
-
-scatter$Journal<-sapply(as.character(scatter$Journal),simpleCap)
-scatter$Journal<-as.factor(scatter$Journal)
-
-############Scatterplot for First Authors############
-
-first <-ggplot(scatter, aes(x= as.numeric(Impact5year), y= as.numeric(female_1st),color=Journal, label=Journal, size = total_n*10))+
-  geom_point(alpha=0.5) + scale_size(range = c(5, 50)) + geom_text_repel(aes(label=Journal), size=6) + ylim(10, 55) + xlim(5, 47) +
-  theme_bw() + theme(axis.text=element_text(size=14),axis.title=element_text(size=14)) + labs(x = "Impact Factor of Journal", y = "Percentage Female First Author") + theme(legend.position= "none")
 first
 
-cor(scatter$female_1st,scatter$Impact5year,method = c("spearman"))
+with(scatter, cor(female_first, impact_5, use = "complete.obs", method = "spearman"))
 
+# ############ Scatterplot for Last Authors ############
 
-############Scatterplot for last Authors############
+last <- ggplot(scatter, 
+               aes(x = impact_5, 
+                   y = female_last, 
+                   color = journal, 
+                   label = journal, 
+                   size = total_n * 10)) +
+  theme_bw() +
+  geom_point(alpha = 0.5) + 
+  scale_size(range = c(5, 50)) + 
+  geom_text_repel(aes(label = journal), size = 6) + 
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 14), 
+        legend.position = "none") + 
+  labs(x = "Impact Factor of Journal",
+       y = "Percentage Female Last Author") +
+  ylim(10, 55) + 
+  xlim(5, 47)
 
-
-last <-ggplot(scatter, aes(x= as.numeric(Impact5year), y= as.numeric(female_last),color=Journal, label=Journal, size = total_n*10))+
-  geom_point(alpha=0.5) + scale_size(range = c(5, 50)) + geom_text_repel(aes(label=Journal), size=6) + ylim(10, 55) + xlim(5, 47) +
-  theme_bw() + theme(axis.text=element_text(size=14),axis.title=element_text(size=14)) + labs(x = "Impact Factor of Journal", y = "Percentage Female Last Author") + theme(legend.position= "none")
 last
 
-cor(scatter$female_last,scatter$Impact5year,method = c("spearman"))
-
-
-####################################################
-############Scatterplot Legacy Version############
-####################################################
-
-q<-ggplot(scatter, aes(x= Impact, y= female_last,color=Journal))+
-  geom_point(size=7) +  ylim(10, 45) +
-  theme_bw() + theme(axis.text=element_text(size=14),axis.title=element_text(size=14)) + labs(x = "Impact Factor of Journal", y = "Percentage Female Last Author") 
-q + theme(legend.position= "none")
+with(scatter, cor(female_last, impact_5, use = "complete.obs", method = "spearman"))

@@ -1,36 +1,61 @@
-#################
-#Make Figure 2
-#Shen et al. 2018
-#BioRxiv
-#################
+####################
+# Make Figure 2
+# Shen et al. (2018)
+# BioRxiv
+####################
 
+# Clear workspace
+rm(list = ls())
 
-#Set your working directory here
-setwd("H:/PubMed1517")
+# Set working directory here
+setwd("~/Desktop/women/")
 
-#Read in NIH %female, with # female nature, science, and PNAS calculated
-LineGraphTop3Journals <- read.csv("LineGraphTop3Journals.csv")
+# Read in NIH %female, with # female nature, science, and PNAS calculated
+top_journals <- read.csv("LineGraphTop3Journals.csv")
+year_range <- min(top_journals$Year):max(top_journals$Year)
 
-#filter to last author
-data = LineGraphTop3Journals %>% filter(Type == "last_article")
+# Filter to last author type
+last_author <- top_journals %>% filter(Type == "last_article")
 
-#plot last author time series
-last = ggplot(data = data, aes(x = Year, y = Percent, color = journal)) +
-  geom_line() 
+# plot last author time series
+last <- ggplot(data = last_author, 
+              aes(x = Year, 
+                  y = Percent, 
+                  color = journal)) +
+  geom_line() +
+  theme_bw() + 
+  scale_x_continuous(breaks = year_range) + 
+  labs(x = "Year", y = "Percent Female Last Author") +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 14), 
+        legend.text = element_text(size = 12), 
+        legend.title = element_text(size = 12),
+        legend.position = c(0.9, 0.8)) +
+  scale_colour_manual(name = "DATA SOURCE", 
+                      values = c("red", "grey", "green4", "blue")) +
+  ylim(0,50)
 
-last + theme_bw() + scale_x_continuous(breaks=seq(2005,2017,1)) + ylim(0,50) +
-  theme(axis.text=element_text(size=14),axis.title=element_text(size=14)) +
-  labs(x = "Year", y = "Percent Female Last Author") + theme(legend.position= c(0.9,0.8)) + scale_colour_manual(name = "DATA SOURCE", values = c("red", "grey", "green4", "blue")) +
-  theme(legend.title=element_text(size=12)) + theme(legend.text = element_text(size=12))
+last
 
 #filter to first author
-data = LineGraphTop3Journals %>% filter(Type == "first_article")
+first_author <- top_journals %>% filter(Type == "first_article")
 
 #plot first author time series
-first = ggplot(data = data, aes(x = Year, y = Percent, color = journal)) +
-  geom_line() 
+first <- ggplot(data = first_author, 
+               aes(x = Year, 
+                   y = Percent, 
+                   color = journal)) +
+  geom_line() +
+  theme_bw() + 
+  scale_x_continuous(breaks = year_range) + 
+  labs(x = "Year", y = "Percent Female First Author") +
+  theme(axis.text = element_text(size = 14), 
+        axis.title = element_text(size = 14), 
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.position = c(0.9, 0.2)) +
+  scale_color_manual(name = "DATA SOURCE", 
+                     values = c("red", "green4", "blue")) +
+  ylim(0, 50) 
 
-first + theme_bw() + scale_x_continuous(breaks=seq(2005,2017,1)) + ylim(0,50) +
-  theme(axis.text=element_text(size=14),axis.title=element_text(size=14)) +
-  labs(x = "Year", y = "Percent Female First Author") + theme(legend.position= c(0.9,0.2)) + scale_color_manual(name = "DATA SOURCE", values = c("red", "green4", "blue")) +
-  theme(legend.title=element_text(size=12)) + theme(legend.text = element_text(size=12))
+first
