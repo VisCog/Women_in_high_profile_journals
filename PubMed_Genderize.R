@@ -89,7 +89,7 @@ for (k in 1:length(temp)) {
     #Last Author
     file_filtered$given_name_last<-NULL
     FName_last_Truncate<-dplyr::filter(file_filtered,FName_last_Truncate!="")$FName_last_Truncate
-    given_name_last = findGivenNames(FName_last_Truncate,textPrepare=FALSE,apikey="a927f80aae8310e6208c1ff06966f659",progress=TRUE)
+    given_name_last = findGivenNames(FName_last_Truncate,textPrepare=FALSE,apikey="YourAPIKey",progress=TRUE)
     #Pull all unique last authors
     given_name_last<-given_name_last[!duplicated(given_name_last),]
     #Left join to original file
