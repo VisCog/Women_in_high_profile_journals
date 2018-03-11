@@ -8,14 +8,15 @@
 rm(list = ls())
 
 # Set working directory here
-setwd("~/Desktop/women/")
+setwd("YourWorkingDirectory")
 
 # Read in NIH %female, with # female nature, science, and PNAS calculated
 top_journals <- read.csv("LineGraphTop3Journals.csv")
 year_range <- min(top_journals$Year):max(top_journals$Year)
 
 # Filter to last author type
-last_author <- top_journals %>% filter(Type == "last_article")
+last_author <- top_journals[article_type == "last_article", ]
+# last_author <- top_journals %>% filter(Type == "last_article")
 
 # plot last author time series
 last <- ggplot(data = last_author, 
@@ -37,10 +38,11 @@ last <- ggplot(data = last_author,
 
 last
 
-#filter to first author
-first_author <- top_journals %>% filter(Type == "first_article")
+# Filter to first author
+# first_author <- top_journals %>% filter(Type == "first_article")
+first_author <- top_journals[article_type == "first_article", ]
 
-#plot first author time series
+# Plot first author time series
 first <- ggplot(data = first_author, 
                aes(x = Year, 
                    y = Percent, 

@@ -14,7 +14,7 @@ library(readr)
 library(ggrepel)
 
 # Set your folder name here 
-setwd("~/Desktop/women/data")
+setwd("YourWorkingDirectory")
 
 # Read in names of data files in folder
 filenames <- list.files(pattern = "*.csv")
@@ -29,10 +29,11 @@ filter_file <- function(filename) {
   
   # filter to articles with abstract
   file <- file %>% filter(Abstract == 1)
+  # file <- file[file$abstract ]
 
   # Create tables for first and last female author counts
-  table_first <- table(file$Gender_1st)
-  table_last <- table(file$Gender_last)
+  table_first <- table(file$gender_first)
+  table_last <- table(file$gender_last)
 
   # Calculate total number of entries
   total_n <- table_first["male"] + table_first["female"]
@@ -52,7 +53,7 @@ percent_female$journal <- journal
 ############ Merging with Journal Impact Factor ############
 
 # Set your folder name here 
-setwd("~/Desktop/women/")
+setwd("/Applications/GitHub/Women_In_high_profile_journal/")
 impact_factor <- read.csv("ThomasReutersImpactFactor.csv", stringsAsFactors = FALSE)
 
 # Merge with percentage female, to make scatter dataset
