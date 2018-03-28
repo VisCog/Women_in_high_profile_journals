@@ -1,111 +1,76 @@
-####################
-# Make Figure 1
+# Figure1_Scatter.R
+#
+# Creates Figure 1 - Scatterplot
 # Shen et al. (2018)
-# BioRxiv
-####################
 
 # Clear workspace
 rm(list = ls()) 
 
-# Load packages
-library(dplyr)
+# Load in packages and functions
 library(ggplot2)
-library(readr)
 library(ggrepel)
+source("Women_in_Journal_Functions.R")
 
-# Set your folder name here 
-setwd("YourWorkingDirectory")
+# Declare the working directories
+main_dir   <- "YourWorkingDirectory"
+figure_dir <- file.path(main_dir, "Figure1")
 
-# Read in names of data files in folder
-filenames <- list.files(pattern = "*.csv")
-
-# Reformat journal names
-journal <- filenames %>% gsub(".csv", "", .) %>% gsub("_", " ", .) %>% toupper()
-
-############ Calculating female author/(female author + male author) for all journals ############
-
-filter_file <- function(filename) {
-  file <- read.csv(filename, stringsAsFactors = FALSE)
-  
-  # filter to articles with abstract
-  file <- file %>% filter(Abstract == 1)
-  # file <- file[file$abstract ]
-
-  # Create tables for first and last female author counts
-  table_first <- table(file$gender_first)
-  table_last <- table(file$gender_last)
-
-  # Calculate total number of entries
-  total_n <- table_first["male"] + table_first["female"]
-  
-  # Calculate percentage female 
-  female_first <- round(table_first["female"] / total_n * 100, 2)
-  female_last <- round(table_last["female"] / (table_last["male"] + table_first["female"]) * 100, 2)
-  
-  return(c(female_first, female_last, total_n))
-}
+# Locate all journal .csv files
+file_names <- list.files(figure_dir, pattern = "*.csv")
 
 # Create data frame with percent female information
-percent_female = data.frame(unname(t(sapply(filenames, filter_file))))
-colnames(percent_female) <- c("female_first", "female_last", "total_n")
-percent_female$journal <- journal
+percent_female <- lapply(file.path(figure_dir, file_names), 
+                         calculate_percent_female)
+percent_female <- data.frame(do.call(rbind, percent_female))
+percent_female$journal <- gsub("_", " ", gsub(".csv", "", file_names))
 
-############ Merging with Journal Impact Factor ############
-
-# Set your folder name here 
-setwd("/Applications/GitHub/Women_In_high_profile_journal/")
+# Read in impact factor data
 impact_factor <- read.csv("ThomasReutersImpactFactor.csv", stringsAsFactors = FALSE)
 
-# Merge with percentage female, to make scatter dataset
+# Merge percentage female  with impact factor data to make scatterplot dataset
 scatter <- merge(impact_factor, percent_female, by = "journal", all = TRUE)
 
-# Change journal title to sentence case
-scatter$journal <- gsub("(\\w)(\\w*)", "\\U\\1\\L\\2", scatter$journal, perl = TRUE)
+# Calculate Spearman Rank correlations between female first and last authors
+# and journal impact factor
+r_first <- with(scatter, cor(female_first, impact_5, 
+                             use = "complete.obs", method = "spearman"))
+r_last  <- with(scatter, cor(female_last, impact_5, 
+                             use = "complete.obs", method = "spearman"))
 
-# ############ Scatterplot for First Authors ############
+# Scatterplot - Percentage Female First Authors ---------------------------
 
-first <- ggplot(data = scatter, 
-                aes(x = impact_5, 
-                    y = female_first, 
-                    color = journal, 
-                    label = journal, 
-                    size = total_n * 10)) + 
+scatter_first <- ggplot(data = scatter, 
+                        aes(x = impact_5, 
+                            y = female_first, 
+                            color = journal, 
+                            size = n_first)) + 
   theme_bw() + 
-  geom_point(alpha = 0.5) + 
-  scale_size(range = c(5, 50)) + 
-  geom_text_repel(aes(label = journal), size = 6) + 
-  theme(axis.text=element_text(size = 14), 
-        axis.title=element_text(size = 14), 
+  geom_point(alpha = 0.35) + 
+  scale_size(range = c(5, 35)) +
+  geom_text_repel(aes(label = journal), size = 5) + 
+  theme(text = element_text(size = 14),  
         legend.position = "none") + 
   labs(x = "Impact Factor of Journal", 
        y = "Percentage Female First Author") + 
-  ylim(10, 55) + 
-  xlim(5, 47) 
+  ylim(10, 55) + xlim(0, 50) 
 
-first
+scatter_first
 
-with(scatter, cor(female_first, impact_5, use = "complete.obs", method = "spearman"))
+# Scatterplot - Percentage Female Last Author -----------------------------
 
-# ############ Scatterplot for Last Authors ############
-
-last <- ggplot(scatter, 
-               aes(x = impact_5, 
-                   y = female_last, 
-                   color = journal, 
-                   label = journal, 
-                   size = total_n * 10)) +
+scatter_last <- ggplot(scatter, 
+                       aes(x = impact_5, 
+                           y = female_last, 
+                           color = journal, 
+                           size = n_last)) +
   theme_bw() +
-  geom_point(alpha = 0.5) + 
-  scale_size(range = c(5, 50)) + 
-  geom_text_repel(aes(label = journal), size = 6) + 
-  theme(axis.text = element_text(size = 14), 
-        axis.title = element_text(size = 14), 
+  geom_point(alpha = 0.35) + 
+  scale_size(range = c(5, 35)) + 
+  geom_text_repel(aes(label = journal), size = 5) + 
+  theme(text = element_text(size = 14), 
         legend.position = "none") + 
   labs(x = "Impact Factor of Journal",
        y = "Percentage Female Last Author") +
-  ylim(10, 55) + 
-  xlim(5, 47)
+  ylim(10, 55) + xlim(0, 50)
 
-last
-
-with(scatter, cor(female_last, impact_5, use = "complete.obs", method = "spearman"))
+scatter_last
