@@ -12,7 +12,7 @@ library(ggrepel)
 source("Women_in_Journal_Functions.R")
 
 # Declare the working directories
-main_dir   <- "YourWorkingDirectory"
+main_dir   <- file.path("YourWorkingDirectory", "Code")
 figure_dir <- file.path(main_dir, "..", "Figure1")
 
 # Locate all journal .csv files

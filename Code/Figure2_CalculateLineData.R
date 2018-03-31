@@ -7,7 +7,7 @@ rm(list = ls())
 source("Women_in_Journal_Functions.R")
 
 # State working directories
-main_dir   <- "YourWorkingDirectory"
+main_dir   <- file.path("YourWorkingDirectory", "Code")
 figure_dir <- file.path(main_dir, "..", "Figure1")
 save_dir   <- file.path(main_dir, "..", "Figure2")
 

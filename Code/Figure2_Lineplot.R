@@ -8,7 +8,7 @@ library(ggplot2)
 source("Women_in_Journal_Functions.R")
 
 # Declare the working directories
-main_dir   <- "YourWorkingDirectory"
+main_dir   <- file.path("YourWorkingDirectory", "Code")
 figure_dir <- file.path(main_dir, "..", "Figure2")
 
 # Load in percentage female line plot data
