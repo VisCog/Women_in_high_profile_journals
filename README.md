@@ -1,6 +1,8 @@
 # Women in High Profile Journals
 
-Online supplementary materials for bioRxiv preprint https://www.biorxiv.org/content/early/2018/03/02/275362
+Online supplementary materials for Shen, Y. A., Shoda, Y., & Fine, I. (2018). Too few women authors on research papers in leading journals. Nature, 555(7695), 165-165.
+
+bioRxiv preprint https://www.biorxiv.org/content/early/2018/03/02/275362
 
 [Thomas Reuters Impact Factor](https://jcr.incites.thomsonreuters.com/JCRJournalHomeAction.action)
 
